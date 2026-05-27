@@ -16,6 +16,7 @@ export default async function CoursesPage() {
     <DashboardShell userName={name} isAdmin={profile?.role === "admin"} active="courses">
       <section className="space-y-8">
         <PageHeader
+          tone="dark"
           eyebrow="Kurse"
           title="Kursübersicht"
           description="Alle Kurse im SimplyLaw Campus: deine freigeschalteten Lernpfade und weitere vorbereitete Themen."
@@ -25,6 +26,7 @@ export default async function CoursesPage() {
           <>
             <div className="space-y-4">
               <SectionTitle
+                tone="dark"
                 title="Meine Kurse"
                 description={
                   myCourses.length
@@ -40,6 +42,7 @@ export default async function CoursesPage() {
                 </div>
               ) : (
                 <EmptyState
+                  tone="dark"
                   title="Noch keine freigeschalteten Kurse"
                   description="Freigeschaltete Kurse erscheinen hier mit Fortschritt und Schnellzugriff."
                 />
@@ -49,6 +52,7 @@ export default async function CoursesPage() {
             {availableCourses.length ? (
               <div className="space-y-4">
                 <SectionTitle
+                  tone="dark"
                   title="Weitere Kurse"
                   description="Diese Kurse sind vorbereitet und können später gebucht oder freigeschaltet werden."
                 />
@@ -61,7 +65,7 @@ export default async function CoursesPage() {
             ) : null}
           </>
         ) : (
-          <EmptyState title="Noch keine Kurse" description="Im Adminbereich können Kurse und Lektionen angelegt werden." />
+          <EmptyState tone="dark" title="Noch keine Kurse" description="Im Adminbereich können Kurse und Lektionen angelegt werden." />
         )}
       </section>
     </DashboardShell>

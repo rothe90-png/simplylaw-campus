@@ -8,7 +8,7 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 const publicComingSoonPaths = new Set(["/", "/login", "/auth/callback", "/auth/signout"]);
 const hiddenComingSoonPaths = new Set(["/register", "/reset-password", "/update-password"]);
-const internalProtectedPrefixes = ["/dashboard", "/courses", "/admin"];
+const internalProtectedPrefixes = ["/dashboard", "/courses", "/admin", "/learning-plans", "/flashcards", "/profile"];
 
 function isInternalPath(pathname: string) {
   return internalProtectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));

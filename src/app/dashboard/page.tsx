@@ -5,7 +5,6 @@ import { CourseCard } from "@/components/course-card";
 import { CoursePreviewCard } from "@/components/course-preview-card";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { EmptyState } from "@/components/empty-state";
-import { PageHeader } from "@/components/page-header";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionTitle } from "@/components/section-title";
 import { requireUser } from "@/lib/auth";
@@ -61,60 +60,74 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   return (
     <DashboardShell userName={name} isAdmin={profile?.role === "admin"} active="dashboard">
-      <section className="space-y-8">
-        <PageHeader
-          eyebrow="SimplyLaw Campus"
-          title={`Willkommen zurück, ${name}`}
-          description="Deine Kursübersicht für Polizei- und Rechtsnachhilfe. Starte direkt dort, wo du aufgehört hast, oder sieh dir weitere Kurse an."
-          actions={
-            <ButtonLink variant="secondary" href="/courses">
-              Alle Kurse ansehen
+      <section className="space-y-7">
+        <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(0,76,145,0.34),rgba(93,63,211,0.20)_45%,rgba(255,255,255,0.06))] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.35)] sm:p-7">
+          <div className="flex items-start justify-between gap-5">
+            <div className="max-w-2xl space-y-3">
+              <p className="text-sm font-bold uppercase text-brand-100">SimplyLaw Campus</p>
+              <h1 className="text-4xl font-bold leading-tight text-white sm:text-5xl">Hallo, {name}</h1>
+              <p className="text-base leading-7 text-slate-300">Mach weiter, wo du aufgehört hast.</p>
+            </div>
+            <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-3xl border border-white/15 bg-white/10 text-2xl font-bold text-white shadow-[0_0_45px_rgba(0,76,145,0.55)] backdrop-blur sm:flex">
+              SL
+            </div>
+          </div>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            {nextCourse ? (
+              <ButtonLink href={`/courses/${nextCourse.id}`}>Fortsetzen</ButtonLink>
+            ) : null}
+            <ButtonLink variant="glass" href="/courses">
+              Kurse ansehen
             </ButtonLink>
-          }
-        />
+          </div>
+        </div>
 
         {params.message ? <p className="rounded-md bg-emerald-50 p-3 text-sm font-semibold text-success">{params.message}</p> : null}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
-            <Card key={stat.label} className="p-5">
-              <p className="text-sm font-semibold text-slate-500">{stat.label}</p>
-              <p className="mt-2 text-3xl font-bold text-ink">{stat.value}</p>
+            <Card key={stat.label} className="border-white/10 bg-white/[0.05] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.22)]">
+              <p className="text-sm font-semibold text-slate-400">{stat.label}</p>
+              <p className="mt-2 text-3xl font-bold text-white">{stat.value}</p>
             </Card>
           ))}
         </div>
 
         {nextCourse ? (
-          <Card className="overflow-hidden">
-            <div className="grid gap-0 lg:grid-cols-[1fr_280px]">
-              <div className="p-5 sm:p-6">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="brand">Weiterlernen</Badge>
-                  <span className="text-xs font-semibold text-slate-500">
-                    {nextCourse.completedLessons}/{nextCourse.lessonsCount} Lektionen abgeschlossen
-                  </span>
+          <div className="space-y-4">
+            <SectionTitle tone="dark" title="Weiterlernen" description="Dein nächster sinnvoller Schritt im Campus." />
+            <Card className="overflow-hidden rounded-[1.75rem] border-white/10 bg-white/[0.06] shadow-[0_22px_70px_rgba(0,0,0,0.3)]">
+              <div className="grid gap-0 lg:grid-cols-[1fr_280px]">
+                <div className="p-5 sm:p-6">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="brand">Letzter Kurs</Badge>
+                    <span className="text-xs font-semibold text-slate-500">
+                      {nextCourse.completedLessons}/{nextCourse.lessonsCount} Lektionen abgeschlossen
+                    </span>
+                  </div>
+                  <div className="mt-4 max-w-2xl space-y-2">
+                    <h2 className="text-2xl font-bold text-white">{nextCourse.title}</h2>
+                    <p className="text-body-sm text-slate-400">{nextCourse.description}</p>
+                  </div>
+                  <ProgressBar className="mt-5 max-w-xl" value={nextCourse.progress} label="Aktueller Fortschritt" />
                 </div>
-                <div className="mt-4 max-w-2xl space-y-2">
-                  <h2 className="text-2xl font-bold text-ink">{nextCourse.title}</h2>
-                  <p className="text-body-sm text-slate-600">{nextCourse.description}</p>
+                <div className="flex flex-col justify-between border-t border-white/10 bg-brand/20 p-5 sm:p-6 lg:border-l lg:border-t-0">
+                  <div>
+                    <p className="text-sm font-bold text-brand-100">Fortschritt</p>
+                    <p className="mt-2 text-4xl font-bold text-white">{nextCourse.progress}%</p>
+                  </div>
+                  <ButtonLink className="mt-6" fullWidth href={`/courses/${nextCourse.id}`}>
+                    Fortsetzen
+                  </ButtonLink>
                 </div>
-                <ProgressBar className="mt-5 max-w-xl" value={nextCourse.progress} label="Aktueller Fortschritt" />
               </div>
-              <div className="flex flex-col justify-between border-t border-line bg-brand-50 p-5 sm:p-6 lg:border-l lg:border-t-0">
-                <div>
-                  <p className="text-sm font-bold text-brand">Gesamtfortschritt</p>
-                  <p className="mt-2 text-4xl font-bold text-brand">{nextCourse.progress}%</p>
-                </div>
-                <ButtonLink className="mt-6" fullWidth href={`/courses/${nextCourse.id}`}>
-                  Weiterlernen
-                </ButtonLink>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         ) : null}
 
         <div className="space-y-4">
           <SectionTitle
+            tone="dark"
             title="Meine Kurse"
             description={
               myCourses.length
@@ -131,11 +144,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           ) : (
             <div className="space-y-6">
               <EmptyState
+                tone="dark"
                 title="Noch keine freigeschalteten Kurse"
                 description="Sobald ein Kurs für dich freigeschaltet ist, erscheint er hier mit Fortschritt und Schnellstart."
               />
               <div className="space-y-4">
                 <SectionTitle
+                  tone="dark"
                   title="Verfügbare Kurse"
                   description="Diese Kurse sind bereits vorbereitet und können später freigeschaltet werden."
                 />
@@ -152,6 +167,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         {myCourses.length && availableCourses.length ? (
           <div className="space-y-4">
             <SectionTitle
+              tone="dark"
               title="Weitere Kurse"
               description="Diese Kurse sind bereits vorbereitet und können später freigeschaltet werden."
             />

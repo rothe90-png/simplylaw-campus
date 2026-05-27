@@ -2,14 +2,15 @@ import Link from "next/link";
 import type { ComponentProps, ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "glass";
 type ButtonSize = "sm" | "md" | "lg";
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary: "bg-brand text-white shadow-card hover:bg-brand-dark focus:ring-brand/20",
   secondary: "border border-line bg-white text-ink hover:border-brand hover:text-brand focus:ring-brand/15",
   ghost: "bg-transparent text-slate-700 hover:bg-brand-50 hover:text-brand focus:ring-brand/10",
-  danger: "border border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100 focus:ring-red-100"
+  danger: "border border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100 focus:ring-red-100",
+  glass: "border border-white/10 bg-white/10 text-white shadow-card hover:bg-white/15 focus:ring-brand/20"
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

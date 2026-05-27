@@ -7,19 +7,19 @@ type CoursePreviewTone = "criminal-law" | "intervention" | "traffic" | "forensic
 const visualStyles: Record<CoursePreviewTone, { label: string; className: string }> = {
   "criminal-law": {
     label: "StGB",
-    className: "bg-gradient-to-br from-brand-700 to-brand-500 text-white"
+    className: "bg-gradient-to-br from-brand-700 via-brand-600 to-violet-700 text-white"
   },
   intervention: {
     label: "E",
-    className: "bg-gradient-to-br from-slate-200 to-brand-50 text-brand"
+    className: "bg-gradient-to-br from-slate-900 via-brand-900 to-slate-700 text-white"
   },
   traffic: {
     label: "V",
-    className: "bg-gradient-to-br from-sky-100 to-cyan-50 text-brand"
+    className: "bg-gradient-to-br from-sky-900 via-brand-800 to-cyan-700 text-white"
   },
   forensics: {
     label: "K",
-    className: "bg-gradient-to-br from-indigo-100 to-white text-brand"
+    className: "bg-gradient-to-br from-indigo-950 via-brand-900 to-slate-800 text-white"
   }
 };
 
@@ -34,9 +34,10 @@ export function CoursePreviewCard({ title, description, tone, href = "/courses" 
   const visual = visualStyles[tone];
 
   return (
-    <Card className="flex h-full overflow-hidden rounded-ui-lg transition hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-soft">
-      <div className={`flex h-32 items-center justify-center ${visual.className}`}>
-        <div className="flex h-16 w-16 items-center justify-center rounded-ui-lg bg-white/80 text-2xl font-bold shadow-card backdrop-blur">
+    <Card className="flex h-full overflow-hidden rounded-[1.5rem] border-white/10 bg-white/[0.06] shadow-[0_20px_60px_rgba(0,0,0,0.28)] transition hover:-translate-y-0.5 hover:border-brand/40 hover:bg-white/[0.08]">
+      <div className={`relative flex h-36 items-center justify-center overflow-hidden ${visual.className}`}>
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.45))]" />
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-white/20 bg-white/15 text-2xl font-bold shadow-[0_0_40px_rgba(0,76,145,0.45)] backdrop-blur">
           {visual.label}
         </div>
       </div>
@@ -44,11 +45,11 @@ export function CoursePreviewCard({ title, description, tone, href = "/courses" 
         <div className="space-y-3">
           <Badge variant="neutral">Noch nicht freigeschaltet</Badge>
           <div className="space-y-2">
-            <h3 className="text-xl font-bold text-ink">{title}</h3>
-            <p className="text-body-sm text-slate-600">{description}</p>
+            <h3 className="text-xl font-bold text-white">{title}</h3>
+            <p className="text-body-sm text-slate-400">{description}</p>
           </div>
         </div>
-        <ButtonLink className="mt-auto" fullWidth variant="secondary" href={href}>
+        <ButtonLink className="mt-auto" fullWidth variant="glass" href={href}>
           Kurs ansehen
         </ButtonLink>
       </div>
