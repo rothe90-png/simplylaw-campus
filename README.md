@@ -71,6 +71,12 @@ src/types               Datenbanktypen
 supabase/migrations     SQL-Schema und Beispielinhalte
 ```
 
+## Designsystem
+
+Die zentralen Design Tokens liegen in `tailwind.config.ts` und `src/app/globals.css`. Wiederverwendbare UI-Bausteine liegen in `src/components`, darunter `Button`, `Card`, `Badge`, `ProgressBar`, `PageHeader`, `SectionTitle`, `CourseCard`, `DashboardShell` und `MobileNavigation`.
+
+Der öffentliche Coming-Soon-Modus bleibt über `src/lib/site-mode.ts` aktiv. Wenn `COMING_SOON_MODE` später auf `false` gesetzt wird, werden die vorbereiteten LMS-Layouts wieder sichtbar.
+
 ## MVP-Funktionen
 
 - Landingpage mit SimplyLaw Campus, Login und Kursübersicht

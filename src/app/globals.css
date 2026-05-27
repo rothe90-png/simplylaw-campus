@@ -5,8 +5,12 @@
 :root {
   --brand: #004c91;
   --brand-dark: #003a70;
+  --brand-soft: #e7f1fb;
   --paper: #f7f9fc;
   --ink: #172033;
+  --muted: #64748b;
+  --line: #d9e2ec;
+  --radius: 0.75rem;
 }
 
 * {
@@ -23,9 +27,10 @@ body {
   margin: 0;
   color: var(--ink);
   background:
-    linear-gradient(180deg, rgba(0, 76, 145, 0.05), transparent 260px),
+    linear-gradient(180deg, rgba(0, 76, 145, 0.045), transparent 280px),
     var(--paper);
   font-family: "DM Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -50,19 +55,19 @@ select {
   }
 
   .btn-primary {
-    @apply inline-flex min-h-12 items-center justify-center rounded-md bg-brand px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-dark focus:outline-none focus:ring-4 focus:ring-brand/20 disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex min-h-12 items-center justify-center rounded-ui-sm bg-brand px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:bg-brand-dark focus:outline-none focus:ring-4 focus:ring-brand/20 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .btn-secondary {
-    @apply inline-flex min-h-12 items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:border-brand hover:text-brand focus:outline-none focus:ring-4 focus:ring-brand/15 disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex min-h-12 items-center justify-center rounded-ui-sm border border-line bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:border-brand hover:text-brand focus:outline-none focus:ring-4 focus:ring-brand/15 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .btn-danger {
-    @apply inline-flex min-h-11 items-center justify-center rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-100;
+    @apply inline-flex min-h-11 items-center justify-center rounded-ui-sm border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-100;
   }
 
   .field {
-    @apply w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-brand/10;
+    @apply w-full rounded-ui-sm border border-line bg-white px-4 py-3 text-sm text-ink outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-brand/10;
   }
 
   .label {
@@ -70,6 +75,6 @@ select {
   }
 
   .card {
-    @apply rounded-lg border border-slate-200 bg-white shadow-soft;
+    @apply rounded-ui border border-line bg-white shadow-card;
   }
 }

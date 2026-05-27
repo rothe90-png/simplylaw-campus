@@ -12,7 +12,7 @@ export default async function RegisterPage({ searchParams }: PageProps) {
     <section className="container-shell py-10 sm:py-16">
       <div className="mx-auto max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
         <div className="space-y-2">
-          <p className="text-sm font-bold uppercase tracking-wide text-brand">Registrierung</p>
+          <p className="text-sm font-bold uppercase text-brand">Registrierung</p>
           <h1 className="text-3xl font-bold text-ink">Konto erstellen</h1>
           <p className="text-sm leading-6 text-slate-600">Neue Nutzer starten automatisch mit der Rolle student.</p>
         </div>
