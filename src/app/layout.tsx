@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ComingSoon } from "@/components/coming-soon";
 import { Header } from "@/components/header";
+import { COMING_SOON_MODE } from "@/lib/site-mode";
 
 export const metadata: Metadata = {
   title: "SimplyLaw Campus",
@@ -15,8 +17,14 @@ export default function RootLayout({
   return (
     <html lang="de">
       <body>
-        <Header />
-        <main>{children}</main>
+        {COMING_SOON_MODE ? (
+          <ComingSoon />
+        ) : (
+          <>
+            <Header />
+            <main>{children}</main>
+          </>
+        )}
       </body>
     </html>
   );
