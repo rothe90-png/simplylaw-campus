@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { slugify } from "@/lib/format";
 import { getQuizForCourse } from "@/lib/queries";
-import type { Json } from "@/types/database";
+import type { CourseEnrollmentInsert, Json } from "@/types/database";
 
 function textValue(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
@@ -22,10 +22,14 @@ function checkboxValue(formData: FormData, key: string) {
 
 async function ensureEnrollment(courseId: string) {
   const { supabase, user } = await requireUser();
+  const enrollment: CourseEnrollmentInsert = {
+    user_id: user.id,
+    course_id: courseId
+  };
 
   await supabase
     .from("course_enrollments")
-    .upsert({ user_id: user.id, course_id: courseId }, { onConflict: "user_id,course_id", ignoreDuplicates: true });
+    .upsert(enrollment, { onConflict: "user_id,course_id", ignoreDuplicates: true });
 
   return { supabase, user };
 }

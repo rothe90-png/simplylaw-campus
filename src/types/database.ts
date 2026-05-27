@@ -26,6 +26,7 @@ export type Database = {
           role?: UserRole;
           updated_at?: string;
         };
+        Relationships: [];
       };
       courses: {
         Row: {
@@ -59,6 +60,7 @@ export type Database = {
           position?: number;
           updated_at?: string;
         };
+        Relationships: [];
       };
       lessons: {
         Row: {
@@ -100,6 +102,7 @@ export type Database = {
           position?: number;
           updated_at?: string;
         };
+        Relationships: [];
       };
       lesson_progress: {
         Row: {
@@ -125,6 +128,7 @@ export type Database = {
           completed_at?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       quizzes: {
         Row: {
@@ -148,6 +152,7 @@ export type Database = {
           passing_score?: number;
           updated_at?: string;
         };
+        Relationships: [];
       };
       questions: {
         Row: {
@@ -168,6 +173,7 @@ export type Database = {
           prompt?: string;
           position?: number;
         };
+        Relationships: [];
       };
       answers: {
         Row: {
@@ -191,6 +197,7 @@ export type Database = {
           is_correct?: boolean;
           position?: number;
         };
+        Relationships: [];
       };
       quiz_results: {
         Row: {
@@ -213,7 +220,15 @@ export type Database = {
           submitted_answers?: Json;
           created_at?: string;
         };
-        Update: never;
+        Update: {
+          user_id?: string;
+          quiz_id?: string;
+          score?: number;
+          total_questions?: number;
+          passed?: boolean;
+          submitted_answers?: Json;
+        };
+        Relationships: [];
       };
       course_enrollments: {
         Row: {
@@ -228,16 +243,21 @@ export type Database = {
           course_id: string;
           enrolled_at?: string;
         };
-        Update: never;
+        Update: {
+          user_id?: string;
+          course_id?: string;
+          enrolled_at?: string;
+        };
+        Relationships: [];
       };
     };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Views: {};
+    Functions: {};
     Enums: {
       user_role: UserRole;
       lesson_status: LessonStatus;
     };
-    CompositeTypes: Record<string, never>;
+    CompositeTypes: {};
   };
 };
 
@@ -250,3 +270,4 @@ export type Question = Database["public"]["Tables"]["questions"]["Row"];
 export type Answer = Database["public"]["Tables"]["answers"]["Row"];
 export type QuizResult = Database["public"]["Tables"]["quiz_results"]["Row"];
 export type CourseEnrollment = Database["public"]["Tables"]["course_enrollments"]["Row"];
+export type CourseEnrollmentInsert = Database["public"]["Tables"]["course_enrollments"]["Insert"];
