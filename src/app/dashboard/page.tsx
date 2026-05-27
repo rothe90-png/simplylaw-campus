@@ -17,18 +17,21 @@ type PageProps = {
 export default async function DashboardPage({ searchParams }: PageProps) {
   const context = await requireUser();
   const { profile, user, supabase } = context;
-  const [courses, params, quizResultResponse] = await Promise.all([
-    getCourseSummaries({ enrolledOnly: true }),
+  const [allCourses, params, quizResultResponse] = await Promise.all([
+    getCourseSummaries(),
     searchParams,
     supabase.from("quiz_results").select("id", { count: "exact", head: true }).eq("user_id", user.id)
   ]);
+  const myCourses = allCourses.filter((course) => course.enrollment);
+  const availableCourses = allCourses.filter((course) => !course.enrollment);
   const name = profile?.full_name || user.email?.split("@")[0] || "Willkommen";
-  const completedLessons = courses.reduce((sum, course) => sum + course.completedLessons, 0);
-  const totalLessons = courses.reduce((sum, course) => sum + course.lessonsCount, 0);
-  const nextCourse = courses.find((course) => course.progress < 100) || courses[0];
+  const completedLessons = myCourses.reduce((sum, course) => sum + course.completedLessons, 0);
+  const totalLessons = myCourses.reduce((sum, course) => sum + course.lessonsCount, 0);
+  const nextCourse = myCourses.find((course) => course.progress < 100) || myCourses[0];
   const stats = [
-    { label: "Kurse", value: courses.length },
+    { label: "Meine Kurse", value: myCourses.length },
     { label: "Lektionen abgeschlossen", value: completedLessons },
+    { label: "Weitere Kurse", value: availableCourses.length },
     { label: "Quiz-Ergebnisse", value: quizResultResponse.count || 0 }
   ];
 
@@ -36,21 +39,21 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     <DashboardShell userName={name} isAdmin={profile?.role === "admin"} active="dashboard">
       <section className="space-y-8">
         <PageHeader
-          eyebrow="Dashboard"
-          title={`Hallo, ${name}`}
-          description="Hier findest du deine freigeschalteten Kurse und deinen aktuellen Lernfortschritt."
+          eyebrow="SimplyLaw Campus"
+          title={`Willkommen zurück, ${name}`}
+          description="Deine Kursübersicht für Polizei- und Rechtsnachhilfe. Starte direkt dort, wo du aufgehört hast, oder sieh dir weitere Kurse an."
           actions={
             <ButtonLink variant="secondary" href="/courses">
-              Kurse ansehen
+              Alle Kurse ansehen
             </ButtonLink>
           }
         />
 
         {params.message ? <p className="rounded-md bg-emerald-50 p-3 text-sm font-semibold text-success">{params.message}</p> : null}
 
-        {courses.length ? (
+        {allCourses.length ? (
           <>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {stats.map((stat) => (
                 <Card key={stat.label} className="p-5">
                   <p className="text-sm font-semibold text-slate-500">{stat.label}</p>
@@ -91,26 +94,46 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             <div className="space-y-4">
               <SectionTitle
                 title="Meine Kurse"
-                description={`${completedLessons} von ${totalLessons} Lektionen abgeschlossen`}
-                action={
-                  <ButtonLink variant="ghost" href="/courses">
-                    Alle Kurse
-                  </ButtonLink>
+                description={
+                  myCourses.length
+                    ? `${completedLessons} von ${totalLessons} Lektionen abgeschlossen`
+                    : "Noch keine Kurse freigeschaltet"
                 }
               />
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {courses.map((course) => (
-                  <CourseCard key={course.id} course={course} actionLabel="Weiterlernen" />
-                ))}
-              </div>
+              {myCourses.length ? (
+                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  {myCourses.map((course) => (
+                    <CourseCard key={course.id} course={course} status="enrolled" actionLabel="Weiterlernen" />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title="Noch keine freigeschalteten Kurse"
+                  description="Sobald ein Kurs für dich freigeschaltet ist, erscheint er hier mit Fortschritt und Schnellstart."
+                  href="/courses"
+                  action="Kurse ansehen"
+                />
+              )}
             </div>
+
+            {availableCourses.length ? (
+              <div className="space-y-4">
+                <SectionTitle
+                  title="Weitere Kurse"
+                  description="Diese Kurse sind bereits vorbereitet und können später freigeschaltet werden."
+                />
+                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  {availableCourses.map((course) => (
+                    <CourseCard key={course.id} course={course} status="locked" actionLabel="Kurs ansehen" />
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </>
         ) : (
           <EmptyState
-            title="Noch keine freigeschalteten Kurse"
-            description="Öffne einen Kurs und schalte ihn für dein Konto frei, damit er im Dashboard erscheint."
-            href="/courses"
-            action="Kurse ansehen"
+            title="Noch keine Kurse"
+            description="Im Adminbereich können Kurse und Lektionen angelegt werden."
           />
         )}
       </section>

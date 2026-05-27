@@ -8,6 +8,11 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 const publicComingSoonPaths = new Set(["/", "/login", "/auth/callback", "/auth/signout"]);
 const hiddenComingSoonPaths = new Set(["/register", "/reset-password", "/update-password"]);
+const internalProtectedPrefixes = ["/dashboard", "/courses", "/admin"];
+
+function isInternalPath(pathname: string) {
+  return internalProtectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
 
 export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -36,15 +41,19 @@ export async function middleware(request: NextRequest) {
     data: { user }
   } = await supabase.auth.getUser();
 
+  if (request.nextUrl.pathname === "/login" && user) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  if (isInternalPath(request.nextUrl.pathname) && !user) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
   if (COMING_SOON_MODE) {
     const pathname = request.nextUrl.pathname;
 
     if (hiddenComingSoonPaths.has(pathname)) {
       return NextResponse.redirect(new URL("/", request.url));
-    }
-
-    if (pathname === "/login" && user) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
     if (publicComingSoonPaths.has(pathname)) {
