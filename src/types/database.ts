@@ -10,6 +10,13 @@ export type Database = {
         Row: {
           id: string;
           full_name: string | null;
+          username: string | null;
+          avatar_url: string | null;
+          level: string | null;
+          federal_state: string | null;
+          agency: string | null;
+          activity_area: string | null;
+          onboarding_completed: boolean;
           role: UserRole;
           created_at: string;
           updated_at: string;
@@ -17,12 +24,26 @@ export type Database = {
         Insert: {
           id: string;
           full_name?: string | null;
+          username?: string | null;
+          avatar_url?: string | null;
+          level?: string | null;
+          federal_state?: string | null;
+          agency?: string | null;
+          activity_area?: string | null;
+          onboarding_completed?: boolean;
           role?: UserRole;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           full_name?: string | null;
+          username?: string | null;
+          avatar_url?: string | null;
+          level?: string | null;
+          federal_state?: string | null;
+          agency?: string | null;
+          activity_area?: string | null;
+          onboarding_completed?: boolean;
           role?: UserRole;
           updated_at?: string;
         };
@@ -262,6 +283,8 @@ export type Database = {
 };
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
+export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 export type Course = Database["public"]["Tables"]["courses"]["Row"];
 export type Lesson = Database["public"]["Tables"]["lessons"]["Row"];
 export type LessonProgress = Database["public"]["Tables"]["lesson_progress"]["Row"];

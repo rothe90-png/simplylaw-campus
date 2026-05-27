@@ -19,10 +19,16 @@ export async function signInAction(formData: FormData) {
   const password = String(formData.get("password") || "");
   const supabase = await createSupabaseServerClient();
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     redirect(`/login?${encodeMessage("error", "Login fehlgeschlagen. Bitte prüfe deine Zugangsdaten.")}`);
+  }
+
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", data.user.id).maybeSingle();
+
+  if (!profile?.onboarding_completed) {
+    redirect("/onboarding");
   }
 
   redirect("/dashboard");

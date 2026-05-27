@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 
 export default async function ProfilePage() {
   const { profile, user } = await requireUser();
-  const name = profile?.full_name || user.email?.split("@")[0] || "SimplyLaw";
+  const name = profile?.username || profile?.full_name || user.email?.split("@")[0] || "SimplyLaw";
 
   return (
     <DashboardShell userName={name} isAdmin={profile?.role === "admin"} active="profile">

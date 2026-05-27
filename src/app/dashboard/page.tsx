@@ -9,6 +9,7 @@ import { ProgressBar } from "@/components/progress-bar";
 import { SectionTitle } from "@/components/section-title";
 import { requireUser } from "@/lib/auth";
 import { getCourseSummaries } from "@/lib/queries";
+import { redirect } from "next/navigation";
 
 type PageProps = {
   searchParams: Promise<{ message?: string }>;
@@ -40,6 +41,11 @@ const availableCoursePreviews = [
 export default async function DashboardPage({ searchParams }: PageProps) {
   const context = await requireUser();
   const { profile, user, supabase } = context;
+
+  if (!profile?.onboarding_completed) {
+    redirect("/onboarding");
+  }
+
   const [allCourses, params, quizResultResponse] = await Promise.all([
     getCourseSummaries(),
     searchParams,
@@ -47,7 +53,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   ]);
   const myCourses = allCourses.filter((course) => course.enrollment);
   const availableCourses = allCourses.filter((course) => !course.enrollment);
-  const name = profile?.full_name || user.email?.split("@")[0] || "Willkommen";
+  const name = profile?.username || profile?.full_name || user.email?.split("@")[0] || "Willkommen";
   const completedLessons = myCourses.reduce((sum, course) => sum + course.completedLessons, 0);
   const totalLessons = myCourses.reduce((sum, course) => sum + course.lessonsCount, 0);
   const nextCourse = myCourses.find((course) => course.progress < 100) || myCourses[0];
@@ -60,23 +66,25 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   return (
     <DashboardShell userName={name} isAdmin={profile?.role === "admin"} active="dashboard">
-      <section className="space-y-7">
-        <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(0,76,145,0.34),rgba(93,63,211,0.20)_45%,rgba(255,255,255,0.06))] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.35)] sm:p-7">
-          <div className="flex items-start justify-between gap-5">
-            <div className="max-w-2xl space-y-3">
-              <p className="text-sm font-bold uppercase text-brand-100">SimplyLaw Campus</p>
-              <h1 className="text-4xl font-bold leading-tight text-white sm:text-5xl">Hallo, {name}</h1>
-              <p className="text-base leading-7 text-slate-300">Mach weiter, wo du aufgehört hast.</p>
+      <section className="space-y-9">
+        <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(135deg,rgba(0,76,145,0.30),rgba(93,63,211,0.17)_48%,rgba(255,255,255,0.055))] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.30)] sm:p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="max-w-2xl space-y-2">
+              <p className="text-xs font-bold uppercase text-brand-100">SimplyLaw Campus</p>
+              <h1 className="text-3xl font-bold leading-tight text-white sm:text-4xl">Hallo, {name}</h1>
+              <p className="text-sm leading-6 text-slate-300">Mach weiter, wo du aufgehört hast.</p>
             </div>
-            <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-3xl border border-white/15 bg-white/10 text-2xl font-bold text-white shadow-[0_0_45px_rgba(0,76,145,0.55)] backdrop-blur sm:flex">
+            <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-lg font-bold text-white shadow-[0_0_34px_rgba(0,76,145,0.48)] backdrop-blur sm:flex">
               SL
             </div>
           </div>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             {nextCourse ? (
-              <ButtonLink href={`/courses/${nextCourse.id}`}>Fortsetzen</ButtonLink>
+              <ButtonLink className="rounded-full px-4" size="sm" href={`/courses/${nextCourse.id}`}>
+                Fortsetzen
+              </ButtonLink>
             ) : null}
-            <ButtonLink variant="glass" href="/courses">
+            <ButtonLink className="rounded-full px-4" size="sm" variant="glass" href="/courses">
               Kurse ansehen
             </ButtonLink>
           </div>
@@ -142,19 +150,19 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               ))}
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <EmptyState
                 tone="dark"
                 title="Noch keine freigeschalteten Kurse"
                 description="Sobald ein Kurs für dich freigeschaltet ist, erscheint er hier mit Fortschritt und Schnellstart."
               />
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <SectionTitle
                   tone="dark"
                   title="Verfügbare Kurse"
                   description="Diese Kurse sind bereits vorbereitet und können später freigeschaltet werden."
                 />
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-6 md:grid-cols-2 xl:gap-7">
                   {availableCoursePreviews.map((course) => (
                     <CoursePreviewCard key={course.title} {...course} />
                   ))}
@@ -171,7 +179,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               title="Weitere Kurse"
               description="Diese Kurse sind bereits vorbereitet und können später freigeschaltet werden."
             />
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 xl:gap-7">
               {availableCourses.map((course) => (
                 <CourseCard key={course.id} course={course} status="locked" actionLabel="Kurs ansehen" />
               ))}
