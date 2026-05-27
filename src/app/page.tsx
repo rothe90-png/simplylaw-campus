@@ -1,6 +1,12 @@
 import Link from "next/link";
+import { ComingSoon } from "@/components/coming-soon";
+import { COMING_SOON_MODE } from "@/lib/site-mode";
 
 export default function HomePage() {
+  if (COMING_SOON_MODE) {
+    return <ComingSoon />;
+  }
+
   return (
     <section className="container-shell py-10 sm:py-16 lg:py-20">
       <div className="grid gap-10 lg:grid-cols-[1fr_440px] lg:items-center">

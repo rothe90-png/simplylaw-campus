@@ -6,11 +6,10 @@ import { COMING_SOON_MODE } from "@/lib/site-mode";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
-export async function middleware(request: NextRequest) {
-  if (COMING_SOON_MODE && request.nextUrl.pathname !== "/") {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+const publicComingSoonPaths = new Set(["/", "/login", "/auth/callback", "/auth/signout"]);
+const hiddenComingSoonPaths = new Set(["/register", "/reset-password", "/update-password"]);
 
+export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -33,7 +32,29 @@ export async function middleware(request: NextRequest) {
     }
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (COMING_SOON_MODE) {
+    const pathname = request.nextUrl.pathname;
+
+    if (hiddenComingSoonPaths.has(pathname)) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    if (pathname === "/login" && user) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    if (publicComingSoonPaths.has(pathname)) {
+      return response;
+    }
+
+    if (!user) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  }
 
   return response;
 }

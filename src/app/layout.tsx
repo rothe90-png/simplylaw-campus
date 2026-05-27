@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ComingSoon } from "@/components/coming-soon";
 import { Header } from "@/components/header";
 import { COMING_SOON_MODE } from "@/lib/site-mode";
 
@@ -18,7 +17,7 @@ export default function RootLayout({
     <html lang="de">
       <body>
         {COMING_SOON_MODE ? (
-          <ComingSoon />
+          children
         ) : (
           <>
             <Header />

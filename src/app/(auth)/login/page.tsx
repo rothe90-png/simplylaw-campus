@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { signInAction } from "@/app/(auth)/actions";
 
 type PageProps = {
@@ -33,15 +32,6 @@ export default async function LoginPage({ searchParams }: PageProps) {
             Einloggen
           </button>
         </form>
-
-        <div className="mt-6 flex flex-col gap-2 text-sm font-semibold text-slate-600 sm:flex-row sm:justify-between">
-          <Link className="text-brand hover:underline" href="/register">
-            Konto erstellen
-          </Link>
-          <Link className="text-brand hover:underline" href="/reset-password">
-            Passwort vergessen
-          </Link>
-        </div>
       </div>
     </section>
   );
