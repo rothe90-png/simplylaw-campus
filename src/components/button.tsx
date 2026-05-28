@@ -45,9 +45,10 @@ export function Button({ className, variant = "primary", size = "md", fullWidth,
 
 export type ButtonLinkProps = ComponentProps<typeof Link> & ButtonBaseProps;
 
-export function ButtonLink({ className, variant = "primary", size = "md", fullWidth, ...props }: ButtonLinkProps) {
+export function ButtonLink({ className, variant = "primary", size = "md", fullWidth, prefetch = false, ...props }: ButtonLinkProps) {
   return (
     <Link
+      prefetch={prefetch}
       className={cn(
         "inline-flex items-center justify-center rounded-ui-sm font-semibold transition focus:outline-none focus:ring-4",
         variantClasses[variant],

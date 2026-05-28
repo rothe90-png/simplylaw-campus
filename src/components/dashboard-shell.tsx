@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { MobileNavigation } from "@/components/mobile-navigation";
+import { SignOutButton } from "@/components/sign-out-button";
 import { cn } from "@/lib/cn";
 
 type DashboardShellProps = {
@@ -36,6 +37,7 @@ export function DashboardShell({ children, userName, isAdmin, active = "dashboar
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
                   className={cn(
                     "block rounded-2xl px-3 py-2.5 text-sm font-bold text-slate-400 transition hover:bg-white/10 hover:text-white",
                     active === item.key && "bg-brand/25 text-white shadow-[0_0_24px_rgba(0,76,145,0.28)]"
@@ -44,9 +46,9 @@ export function DashboardShell({ children, userName, isAdmin, active = "dashboar
                   {item.label}
                 </Link>
               ))}
-              <Link className="block rounded-2xl px-3 py-2.5 text-sm font-bold text-slate-500 transition hover:bg-white/10 hover:text-white" href="/auth/signout">
+              <SignOutButton className="block w-full rounded-2xl px-3 py-2.5 text-left text-sm font-bold text-slate-500 transition hover:bg-white/10 hover:text-white">
                 Logout
-              </Link>
+              </SignOutButton>
             </nav>
           </div>
         </aside>

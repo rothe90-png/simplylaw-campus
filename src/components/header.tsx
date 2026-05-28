@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SignOutButton } from "@/components/sign-out-button";
 import { getCurrentUserAndProfile } from "@/lib/auth";
 
 export async function Header() {
@@ -25,22 +26,22 @@ export async function Header() {
         </Link>
 
         <nav className="flex items-center gap-2 overflow-x-auto text-sm font-semibold text-slate-700">
-          <Link className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-brand" href="/courses">
+          <Link className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-brand" href="/courses" prefetch={false}>
             Kurse
           </Link>
           {isSignedIn ? (
             <>
-              <Link className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-brand" href="/dashboard">
+              <Link className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-brand" href="/dashboard" prefetch={false}>
                 Dashboard
               </Link>
               {isAdmin ? (
-                <Link className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-brand" href="/admin">
+                <Link className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-brand" href="/admin" prefetch={false}>
                   Admin
                 </Link>
               ) : null}
-              <Link className="rounded-md px-3 py-2 hover:bg-slate-100 hover:text-brand" href="/auth/signout">
+              <SignOutButton className="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100 hover:text-brand">
                 Logout
-              </Link>
+              </SignOutButton>
             </>
           ) : (
             <Link className="rounded-md px-3 py-2 text-brand hover:bg-brand-light" href="/login">

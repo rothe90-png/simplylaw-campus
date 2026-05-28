@@ -69,6 +69,7 @@ export function MobileNavigation({ isAdmin, active }: MobileNavigationProps) {
           <Link
             key={item.href}
             href={item.href}
+            prefetch={false}
             className={cn(
               "flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[0.68rem] font-bold text-slate-500 transition hover:bg-white/10 hover:text-white",
               active === item.key && "bg-brand/25 text-white shadow-[0_0_24px_rgba(0,76,145,0.35)]"
@@ -79,7 +80,11 @@ export function MobileNavigation({ isAdmin, active }: MobileNavigationProps) {
           </Link>
         ))}
       </div>
-      {isAdmin ? <Link className="sr-only" href="/admin">Admin</Link> : null}
+      {isAdmin ? (
+        <Link className="sr-only" href="/admin" prefetch={false}>
+          Admin
+        </Link>
+      ) : null}
     </nav>
   );
 }

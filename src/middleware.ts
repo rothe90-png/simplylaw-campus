@@ -14,6 +14,16 @@ function isInternalPath(pathname: string) {
   return internalProtectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
+function hasSupabaseSessionCookie(request: NextRequest) {
+  return request.cookies.getAll().some(({ name }) => name.startsWith("sb-") && /-auth-token(?:\.|$)/.test(name));
+}
+
+function debugAuth(message: string, data: Record<string, unknown>) {
+  if (process.env.NODE_ENV === "development") {
+    console.info(`[auth middleware] ${message}`, data);
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -45,23 +55,36 @@ export async function middleware(request: NextRequest) {
     return redirectResponse;
   }
 
-  const {
-    data: { user },
-    error: userError
-  } = await supabase.auth.getUser();
-  let hasSessionCookie = Boolean(user);
+  const pathname = request.nextUrl.pathname;
+  const hasSessionCookie = hasSupabaseSessionCookie(request);
+  let hasVerifiedUser = false;
 
-  if (!hasSessionCookie && userError) {
+  if (hasSessionCookie) {
     const {
-      data: { session }
-    } = await supabase.auth.getSession();
-    hasSessionCookie = Boolean(session);
+      data: { user },
+      error: userError
+    } = await supabase.auth.getUser();
+    hasVerifiedUser = Boolean(user);
+
+    if (userError) {
+      debugAuth("getUser failed; passing request to protected page validation", {
+        pathname,
+        hasSessionCookie,
+        errorName: userError.name
+      });
+    }
   }
 
-  const pathname = request.nextUrl.pathname;
   const isProtectedPath = isInternalPath(pathname);
 
-  if (pathname === "/login" && user) {
+  debugAuth("request", {
+    pathname,
+    hasSessionCookie,
+    hasVerifiedUser,
+    isProtectedPath
+  });
+
+  if (pathname === "/login" && hasVerifiedUser) {
     return redirectWithSessionCookies("/dashboard");
   }
 
