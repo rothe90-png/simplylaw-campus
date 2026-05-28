@@ -6,6 +6,7 @@ import { FcGoogle } from "react-icons/fc";
 import { MdOutlineMail } from "react-icons/md";
 import { signInAction } from "@/app/(auth)/actions";
 import { cn } from "@/lib/cn";
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type LoginFlowProps = {
   message?: string;
@@ -30,19 +31,22 @@ function ProviderButton({
   children,
   icon,
   onClick,
-  variant = "dark"
+  variant = "dark",
+  disabled
 }: {
   children: React.ReactNode;
   icon?: React.ReactNode;
-  onClick?: () => void;
+  onClick?: () => void | Promise<void>;
   variant?: "apple" | "dark";
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className={cn(
-        "group flex min-h-16 w-full items-center justify-center gap-4 rounded-[1.35rem] px-6 text-lg font-black transition duration-200 ease-out hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-brand/25 active:translate-y-0",
+        "group flex min-h-16 w-full items-center justify-center gap-4 rounded-[1.35rem] px-6 text-lg font-black transition duration-200 ease-out hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-brand/25 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0",
         variant === "apple"
           ? "border border-white bg-white text-black shadow-[0_18px_46px_rgba(255,255,255,0.08)] hover:bg-slate-100"
           : "border border-white/8 bg-white/[0.24] text-white shadow-[0_18px_46px_rgba(0,0,0,0.22)] hover:bg-white/[0.30]"
@@ -60,6 +64,50 @@ function ProviderButton({
 
 export function LoginFlow({ message, error }: LoginFlowProps) {
   const [mode, setMode] = useState<"start" | "email">("start");
+  const [oauthError, setOauthError] = useState<string | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<"google" | null>(null);
+
+  async function handleGoogleSignIn() {
+    setOauthError(null);
+    setOauthLoading("google");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const redirectTo = `${window.location.origin}/auth/callback?next=/dashboard`;
+      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent"
+          }
+        }
+      });
+
+      if (signInError) {
+        console.error("Google OAuth konnte nicht gestartet werden:", signInError);
+        setOauthError(signInError.message || "Google Login konnte nicht gestartet werden.");
+        setOauthLoading(null);
+        return;
+      }
+
+      if (!data.url) {
+        console.error("Google OAuth lieferte keine Redirect-URL.", data);
+        setOauthError("Google Login konnte nicht gestartet werden. Bitte prüfe die Supabase OAuth-Konfiguration.");
+        setOauthLoading(null);
+      }
+    } catch (caughtError) {
+      console.error("Unerwarteter Fehler beim Google OAuth Login:", caughtError);
+      setOauthError(caughtError instanceof Error ? caughtError.message : "Google Login konnte nicht gestartet werden.");
+      setOauthLoading(null);
+    }
+  }
+
+  function handleAppleSignIn() {
+    console.warn("Apple OAuth ist in SimplyLaw Campus noch nicht konfiguriert.");
+    setOauthError("Apple Login ist noch nicht aktiviert. Bitte nutze Google oder E-Mail.");
+  }
 
   return (
     <main className="min-h-screen bg-[#060a14] text-white">
@@ -87,12 +135,19 @@ export function LoginFlow({ message, error }: LoginFlowProps) {
               <p className="text-xl leading-8 text-slate-400">Starte deinen SimplyLaw Campus.</p>
             </div>
 
+            {message ? <p className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-3 text-sm font-semibold text-emerald-200">{message}</p> : null}
+            {error || oauthError ? (
+              <p className="rounded-2xl border border-red-300/20 bg-red-400/10 p-3 text-sm font-semibold text-red-200">
+                {oauthError || error}
+              </p>
+            ) : null}
+
             <div className="space-y-4">
-              <ProviderButton icon={<FaApple aria-hidden="true" />} variant="apple">
+              <ProviderButton icon={<FaApple aria-hidden="true" />} onClick={handleAppleSignIn} variant="apple">
                 Mit Apple fortfahren
               </ProviderButton>
-              <ProviderButton icon={<FcGoogle aria-hidden="true" />} variant="dark">
-                Mit Google fortfahren
+              <ProviderButton icon={<FcGoogle aria-hidden="true" />} onClick={handleGoogleSignIn} variant="dark" disabled={oauthLoading === "google"}>
+                {oauthLoading === "google" ? "Google wird geöffnet..." : "Mit Google fortfahren"}
               </ProviderButton>
               <ProviderButton icon={<MdOutlineMail aria-hidden="true" />} onClick={() => setMode("email")} variant="dark">
                 Mit E-Mail fortfahren
