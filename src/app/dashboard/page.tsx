@@ -8,34 +8,14 @@ import { EmptyState } from "@/components/empty-state";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionTitle } from "@/components/section-title";
 import { requireOnboardedUser } from "@/lib/auth";
+import { getAvailableCoursePreviews } from "@/lib/course-catalog";
 import { getCourseSummaries } from "@/lib/queries";
 
 type PageProps = {
   searchParams: Promise<{ message?: string }>;
 };
 
-const availableCoursePreviews = [
-  {
-    title: "Strafrecht",
-    description: "Grundlagen, Prüfungsschemata und typische Fallfragen kompakt trainieren.",
-    tone: "criminal-law" as const
-  },
-  {
-    title: "Eingriffsrecht",
-    description: "Befugnisse, Verhältnismäßigkeit und rechtssichere Maßnahmen verstehen.",
-    tone: "intervention" as const
-  },
-  {
-    title: "Verkehrsrecht",
-    description: "Kontrollen, Ordnungswidrigkeiten und Standardlagen im Straßenverkehr üben.",
-    tone: "traffic" as const
-  },
-  {
-    title: "Kriminalistik",
-    description: "Spuren, Tatortarbeit und kriminalistische Denkweisen strukturiert lernen.",
-    tone: "forensics" as const
-  }
-];
+const availableCoursePreviews = getAvailableCoursePreviews();
 
 export default async function DashboardPage({ searchParams }: PageProps) {
   const context = await requireOnboardedUser();

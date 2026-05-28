@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { submitQuiz } from "@/app/actions";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeading } from "@/components/page-heading";
@@ -14,9 +14,12 @@ type PageProps = {
 export default async function QuizPage({ params, searchParams }: PageProps) {
   await requireOnboardedUser();
   const { courseId } = await params;
-  const [course, quiz, query] = await Promise.all([getCourseDetail(courseId), getQuizForCourse(courseId), searchParams]);
+  const [course, query] = await Promise.all([getCourseDetail(courseId), searchParams]);
 
   if (!course) notFound();
+  if (!course.enrollment) redirect(`/courses/${course.slug || course.id}`);
+
+  const quiz = await getQuizForCourse(course.id);
 
   const latestResult = quiz ? await getLatestQuizResult(quiz.id) : null;
   const resultFromSubmit =

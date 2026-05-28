@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { completeLesson, markLessonStarted } from "@/app/actions";
 import { LessonStatusBadge } from "@/components/lesson-status-badge";
 import { PageHeading } from "@/components/page-heading";
@@ -16,6 +16,7 @@ export default async function LessonPage({ params }: PageProps) {
   const data = await getLessonPageData(courseId, lessonId);
 
   if (!data) notFound();
+  if (!data.enrollment) redirect(`/courses/${data.course.slug || data.course.id}`);
 
   const startAction = markLessonStarted.bind(null, data.course.id, data.lesson.id);
   const completeAction = completeLesson.bind(null, data.course.id, data.lesson.id);

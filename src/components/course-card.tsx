@@ -52,6 +52,7 @@ export function CourseCard({ course, actionLabel, compact, status }: CourseCardP
   const isEnrolled = status ? status === "enrolled" : Boolean(course.enrollment);
   const visual = getCourseVisual(course);
   const label = actionLabel || (isEnrolled ? "Weiterlernen" : "Kurs ansehen");
+  const href = `/courses/${course.slug || course.id}`;
 
   return (
     <Card className="flex h-full min-h-[25rem] flex-col overflow-hidden rounded-[1.75rem] border-white/10 bg-white/[0.06] shadow-[0_20px_60px_rgba(0,0,0,0.28)] transition hover:-translate-y-0.5 hover:border-brand/40 hover:bg-white/[0.08]">
@@ -83,7 +84,7 @@ export function CourseCard({ course, actionLabel, compact, status }: CourseCardP
           )}
         </div>
 
-        <ButtonLink className="mt-auto rounded-full" fullWidth variant={isEnrolled ? "primary" : "glass"} href={`/courses/${course.id}`}>
+        <ButtonLink className="mt-auto rounded-full" fullWidth variant={isEnrolled ? "primary" : "glass"} href={href}>
           {label}
         </ButtonLink>
       </div>

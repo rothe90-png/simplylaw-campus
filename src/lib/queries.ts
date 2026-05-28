@@ -43,6 +43,10 @@ function completedByCourse(progress: LessonProgress[]) {
   return counts;
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 export async function getCourseSummaries(options?: { enrolledOnly?: boolean }) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -119,17 +123,16 @@ export async function getCourseSummaries(options?: { enrolledOnly?: boolean }) {
   return summaries;
 }
 
-export async function getCourseDetail(courseId: string): Promise<CourseDetail | null> {
+export async function getCourseDetail(courseIdOrSlug: string): Promise<CourseDetail | null> {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
 
-  const { data: course, error: courseError } = await supabase
-    .from("courses")
-    .select("*")
-    .eq("id", courseId)
-    .maybeSingle();
+  let courseQuery = supabase.from("courses").select("*");
+  courseQuery = isUuid(courseIdOrSlug) ? courseQuery.eq("id", courseIdOrSlug) : courseQuery.eq("slug", courseIdOrSlug);
+
+  const { data: course, error: courseError } = await courseQuery.maybeSingle();
 
   if (courseError) throw courseError;
   if (!course || !course.is_published) return null;
@@ -187,13 +190,16 @@ export async function getCourseDetail(courseId: string): Promise<CourseDetail | 
   };
 }
 
-export async function getLessonPageData(courseId: string, lessonId: string) {
+export async function getLessonPageData(courseIdOrSlug: string, lessonId: string) {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
 
-  const { data: course, error: courseError } = await supabase.from("courses").select("*").eq("id", courseId).maybeSingle();
+  let courseQuery = supabase.from("courses").select("*");
+  courseQuery = isUuid(courseIdOrSlug) ? courseQuery.eq("id", courseIdOrSlug) : courseQuery.eq("slug", courseIdOrSlug);
+
+  const { data: course, error: courseError } = await courseQuery.maybeSingle();
   if (courseError) throw courseError;
   if (!course || !course.is_published) return null;
 
@@ -218,9 +224,19 @@ export async function getLessonPageData(courseId: string, lessonId: string) {
   const lessons = lessonsData ?? [];
 
   let progressStatus: LessonProgress["status"] = "open";
+  let enrollment: CourseEnrollment | null = null;
   let pdfUrl: string | null = null;
 
   if (user) {
+    const { data: enrollmentRow } = await supabase
+      .from("course_enrollments")
+      .select("*")
+      .eq("course_id", course.id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    enrollment = enrollmentRow ?? null;
+
     const { data: progress } = await supabase
       .from("lesson_progress")
       .select("*")
@@ -245,6 +261,7 @@ export async function getLessonPageData(courseId: string, lessonId: string) {
   return {
     course,
     lesson: { ...lesson, status: progressStatus },
+    enrollment,
     lessons,
     previousLesson: currentIndex > 0 ? lessons[currentIndex - 1] : null,
     nextLesson: currentIndex >= 0 && currentIndex < lessons.length - 1 ? lessons[currentIndex + 1] : null,

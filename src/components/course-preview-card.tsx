@@ -1,10 +1,9 @@
 import { Badge } from "@/components/badge";
 import { ButtonLink } from "@/components/button";
 import { Card } from "@/components/card";
+import type { CourseCatalogTone } from "@/lib/course-catalog";
 
-type CoursePreviewTone = "criminal-law" | "intervention" | "traffic" | "forensics";
-
-const visualStyles: Record<CoursePreviewTone, { label: string; className: string }> = {
+const visualStyles: Record<CourseCatalogTone, { label: string; className: string }> = {
   "criminal-law": {
     label: "StGB",
     className: "bg-gradient-to-br from-brand-700 via-brand-600 to-violet-700 text-white"
@@ -20,13 +19,17 @@ const visualStyles: Record<CoursePreviewTone, { label: string; className: string
   forensics: {
     label: "K",
     className: "bg-gradient-to-br from-indigo-950 via-brand-900 to-slate-800 text-white"
+  },
+  method: {
+    label: "§",
+    className: "bg-gradient-to-br from-brand-900 via-slate-900 to-violet-950 text-white"
   }
 };
 
 type CoursePreviewCardProps = {
   title: string;
   description: string;
-  tone: CoursePreviewTone;
+  tone: CourseCatalogTone;
   href?: string;
 };
 
