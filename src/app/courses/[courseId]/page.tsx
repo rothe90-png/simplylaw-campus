@@ -4,7 +4,7 @@ import { enrollInCourse } from "@/app/actions";
 import { LessonStatusBadge } from "@/components/lesson-status-badge";
 import { PageHeading } from "@/components/page-heading";
 import { ProgressBar } from "@/components/progress-bar";
-import { getCurrentUserAndProfile } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { getCourseDetail } from "@/lib/queries";
 
 type PageProps = {
@@ -13,7 +13,7 @@ type PageProps = {
 
 export default async function CourseDetailPage({ params }: PageProps) {
   const { courseId } = await params;
-  const [course, { user }] = await Promise.all([getCourseDetail(courseId), getCurrentUserAndProfile()]);
+  const [course, { user }] = await Promise.all([getCourseDetail(courseId), requireOnboardedUser()]);
 
   if (!course) notFound();
 

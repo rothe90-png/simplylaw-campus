@@ -30,6 +30,18 @@ export async function requireUser() {
   };
 }
 
+export async function requireOnboardedUser() {
+  const context = await requireUser();
+
+  if (!context.profile?.onboarding_completed) {
+    redirect("/onboarding");
+  }
+
+  return context as typeof context & {
+    profile: NonNullable<typeof context.profile>;
+  };
+}
+
 export async function requireAdmin() {
   const context = await requireUser();
 

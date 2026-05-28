@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { completeLesson, markLessonStarted } from "@/app/actions";
 import { LessonStatusBadge } from "@/components/lesson-status-badge";
 import { PageHeading } from "@/components/page-heading";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { getLessonPageData } from "@/lib/queries";
 
 type PageProps = {
@@ -11,7 +11,7 @@ type PageProps = {
 };
 
 export default async function LessonPage({ params }: PageProps) {
-  await requireUser();
+  await requireOnboardedUser();
   const { courseId, lessonId } = await params;
   const data = await getLessonPageData(courseId, lessonId);
 

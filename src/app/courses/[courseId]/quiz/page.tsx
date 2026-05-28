@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { submitQuiz } from "@/app/actions";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeading } from "@/components/page-heading";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { getCourseDetail, getLatestQuizResult, getQuizForCourse } from "@/lib/queries";
 
 type PageProps = {
@@ -12,7 +12,7 @@ type PageProps = {
 };
 
 export default async function QuizPage({ params, searchParams }: PageProps) {
-  await requireUser();
+  await requireOnboardedUser();
   const { courseId } = await params;
   const [course, quiz, query] = await Promise.all([getCourseDetail(courseId), getQuizForCourse(courseId), searchParams]);
 

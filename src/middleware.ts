@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { CookieOptions } from "@supabase/ssr";
-import type { Database, Profile } from "@/types/database";
+import type { Database } from "@/types/database";
 import { COMING_SOON_MODE } from "@/lib/site-mode";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
@@ -23,6 +23,7 @@ export async function middleware(request: NextRequest) {
   }
 
   let response = NextResponse.next({ request });
+  let pendingCookies: CookieToSet[] = [];
 
   const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -30,6 +31,7 @@ export async function middleware(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet: CookieToSet[]) {
+        pendingCookies = cookiesToSet;
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
@@ -37,41 +39,30 @@ export async function middleware(request: NextRequest) {
     }
   });
 
+  function redirectWithSessionCookies(path: string) {
+    const redirectResponse = NextResponse.redirect(new URL(path, request.url));
+    pendingCookies.forEach(({ name, value, options }) => redirectResponse.cookies.set(name, value, options));
+    return redirectResponse;
+  }
+
   const {
     data: { user }
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
   const isProtectedPath = isInternalPath(pathname);
-  const isOnboardingPath = pathname === "/onboarding";
-  let onboardingCompleted = false;
-
-  if (user) {
-    const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-    const onboardingProfile = profile as Pick<Profile, "onboarding_completed"> | null;
-
-    onboardingCompleted = Boolean(onboardingProfile?.onboarding_completed);
-  }
 
   if (pathname === "/login" && user) {
-    return NextResponse.redirect(new URL(onboardingCompleted ? "/dashboard" : "/onboarding", request.url));
+    return redirectWithSessionCookies("/dashboard");
   }
 
   if (isProtectedPath && !user) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  if (user && isProtectedPath && !isOnboardingPath && !onboardingCompleted) {
-    return NextResponse.redirect(new URL("/onboarding", request.url));
-  }
-
-  if (user && isOnboardingPath && onboardingCompleted) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return redirectWithSessionCookies("/login");
   }
 
   if (COMING_SOON_MODE) {
     if (hiddenComingSoonPaths.has(pathname)) {
-      return NextResponse.redirect(new URL("/", request.url));
+      return redirectWithSessionCookies("/");
     }
 
     if (publicComingSoonPaths.has(pathname)) {
@@ -79,7 +70,7 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!user) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return redirectWithSessionCookies("/login");
     }
   }
 

@@ -3,12 +3,12 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { SectionTitle } from "@/components/section-title";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { getCourseSummaries } from "@/lib/queries";
 
 export default async function CoursesPage() {
-  const [{ profile, user }, courses] = await Promise.all([requireUser(), getCourseSummaries()]);
-  const name = profile?.full_name || user.email?.split("@")[0] || "SimplyLaw";
+  const [{ profile, user }, courses] = await Promise.all([requireOnboardedUser(), getCourseSummaries()]);
+  const name = profile.username || profile.full_name || user.email?.split("@")[0] || "SimplyLaw";
   const myCourses = courses.filter((course) => course.enrollment);
   const availableCourses = courses.filter((course) => !course.enrollment);
 

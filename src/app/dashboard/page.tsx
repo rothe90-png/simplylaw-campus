@@ -7,9 +7,8 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { EmptyState } from "@/components/empty-state";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionTitle } from "@/components/section-title";
-import { requireUser } from "@/lib/auth";
+import { requireOnboardedUser } from "@/lib/auth";
 import { getCourseSummaries } from "@/lib/queries";
-import { redirect } from "next/navigation";
 
 type PageProps = {
   searchParams: Promise<{ message?: string }>;
@@ -39,12 +38,8 @@ const availableCoursePreviews = [
 ];
 
 export default async function DashboardPage({ searchParams }: PageProps) {
-  const context = await requireUser();
+  const context = await requireOnboardedUser();
   const { profile, user, supabase } = context;
-
-  if (!profile?.onboarding_completed) {
-    redirect("/onboarding");
-  }
 
   const [allCourses, params, quizResultResponse] = await Promise.all([
     getCourseSummaries(),
