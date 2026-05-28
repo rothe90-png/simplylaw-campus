@@ -42,6 +42,9 @@ Führe die SQL-Migrationen in dieser Reihenfolge in Supabase aus:
 
 1. `supabase/migrations/001_initial_schema.sql`
 2. `supabase/migrations/002_seed_sample_content.sql`
+3. `supabase/migrations/003_add_profile_onboarding.sql`
+4. `supabase/migrations/004_repair_profile_onboarding_persistence.sql`
+5. `supabase/migrations/005_admin_cms.sql`
 
 Erstellt werden:
 
@@ -54,8 +57,11 @@ Erstellt werden:
 - `answers`
 - `quiz_results`
 - `course_enrollments`
+- `modules`
+- `media_assets`
+- `entitlements`
 
-Zusätzlich richtet die Migration Rollen, RLS-Policies, Trigger, Indizes und den privaten Storage-Bucket `lesson-files` für PDF-Dateien ein.
+Zusätzlich richten die Migrationen Rollen, RLS-Policies, Trigger, Indizes sowie die Storage-Buckets `lesson-files` und `course-media` ein.
 
 ## Admin-Nutzer festlegen
 
@@ -71,7 +77,7 @@ where id = (
 );
 ```
 
-Danach ist `/admin` sichtbar und nutzbar.
+Danach ist `/admin` sichtbar und nutzbar. Admin-CMS 1.0 bietet eigene Bereiche für Kurse, Module, Lektionen, Medien, Quiz, Nutzer, Freischaltungen und spätere Zahlungen.
 
 ## Projektstruktur
 

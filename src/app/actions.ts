@@ -5,7 +5,24 @@ import { redirect } from "next/navigation";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { slugify } from "@/lib/format";
 import { getQuizForCourse } from "@/lib/queries";
-import type { CourseEnrollmentInsert, Json } from "@/types/database";
+import type {
+  ContentStatus,
+  CourseAccessType,
+  CourseEnrollmentInsert,
+  CourseInsert,
+  CourseStatus,
+  CourseUpdate,
+  EntitlementInsert,
+  EntitlementSource,
+  EntitlementStatus,
+  Json,
+  LessonInsert,
+  LessonUpdate,
+  MediaAssetInsert,
+  MediaAssetType,
+  QuizInsert,
+  UserRole
+} from "@/types/database";
 
 function textValue(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
@@ -18,6 +35,35 @@ function numberValue(formData: FormData, key: string, fallback = 0) {
 
 function checkboxValue(formData: FormData, key: string) {
   return formData.get(key) === "on";
+}
+
+function optionalTextValue(formData: FormData, key: string) {
+  const value = textValue(formData, key);
+  return value.length ? value : null;
+}
+
+function optionalNumberValue(formData: FormData, key: string) {
+  const raw = textValue(formData, key);
+  if (!raw.length) return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
+function nullableIdValue(formData: FormData, key: string) {
+  const value = textValue(formData, key);
+  return value && value !== "none" ? value : null;
+}
+
+function selectValue<T extends string>(formData: FormData, key: string, allowed: readonly T[], fallback: T) {
+  const value = textValue(formData, key) as T;
+  return allowed.includes(value) ? value : fallback;
+}
+
+function dateTimeValue(formData: FormData, key: string, fallbackIso?: string) {
+  const raw = textValue(formData, key);
+  if (!raw.length) return fallbackIso ?? null;
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? fallbackIso ?? null : date.toISOString();
 }
 
 async function ensureEnrollment(courseId: string) {
@@ -315,4 +361,233 @@ export async function deleteQuestion(courseId: string, questionId: string) {
 
   revalidatePath("/admin");
   revalidatePath(`/courses/${courseId}/quiz`);
+}
+
+const courseStatuses = ["draft", "published", "archived"] as const satisfies readonly CourseStatus[];
+const courseAccessTypes = ["free", "premium", "single_purchase"] as const satisfies readonly CourseAccessType[];
+const contentStatuses = ["draft", "published", "archived"] as const satisfies readonly ContentStatus[];
+const mediaAssetTypes = ["image", "video", "pdf"] as const satisfies readonly MediaAssetType[];
+const entitlementSources = ["manual", "stripe", "paypal", "apple", "google"] as const satisfies readonly EntitlementSource[];
+const entitlementStatuses = ["active", "expired", "revoked"] as const satisfies readonly EntitlementStatus[];
+const userRoles = ["student", "admin"] as const satisfies readonly UserRole[];
+
+type AdminCourseFormPayload = Omit<CourseInsert, "id" | "created_at" | "updated_at">;
+
+function adminCoursePayload(formData: FormData): AdminCourseFormPayload {
+  const title = textValue(formData, "title");
+  const status = selectValue(formData, "status", courseStatuses, "draft");
+  const sortOrder = numberValue(formData, "sort_order", 0);
+
+  return {
+    title,
+    slug: slugify(textValue(formData, "slug") || title),
+    description: textValue(formData, "description"),
+    short_description: optionalTextValue(formData, "short_description"),
+    category: textValue(formData, "category"),
+    status,
+    access_type: selectValue(formData, "access_type", courseAccessTypes, "premium"),
+    price_cents: optionalNumberValue(formData, "price_cents"),
+    cover_image_url: optionalTextValue(formData, "cover_image_url"),
+    sort_order: sortOrder,
+    position: sortOrder,
+    is_published: status === "published"
+  };
+}
+
+export async function createAdminCourse(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const payload = adminCoursePayload(formData);
+  const { data, error } = await supabase.from("courses").insert(payload).select("id").single();
+
+  if (error) throw error;
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/courses");
+  revalidatePath("/courses");
+  redirect(`/admin/courses/${data.id}/edit`);
+}
+
+export async function updateAdminCourse(courseId: string, formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const payload: CourseUpdate = adminCoursePayload(formData);
+  const { error } = await supabase.from("courses").update(payload).eq("id", courseId);
+
+  if (error) throw error;
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/courses");
+  revalidatePath(`/admin/courses/${courseId}/edit`);
+  revalidatePath("/courses");
+  revalidatePath(`/courses/${courseId}`);
+}
+
+export async function createAdminModule(courseId: string, formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const { error } = await supabase.from("modules").insert({
+    course_id: courseId,
+    title: textValue(formData, "title"),
+    description: optionalTextValue(formData, "description"),
+    sort_order: numberValue(formData, "sort_order", 0),
+    status: selectValue(formData, "status", contentStatuses, "draft")
+  });
+
+  if (error) throw error;
+  revalidatePath(`/admin/courses/${courseId}/modules`);
+  revalidatePath(`/courses/${courseId}`);
+}
+
+export async function updateAdminModule(courseId: string, moduleId: string, formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const { error } = await supabase
+    .from("modules")
+    .update({
+      title: textValue(formData, "title"),
+      description: optionalTextValue(formData, "description"),
+      sort_order: numberValue(formData, "sort_order", 0),
+      status: selectValue(formData, "status", contentStatuses, "draft")
+    })
+    .eq("id", moduleId);
+
+  if (error) throw error;
+  revalidatePath(`/admin/courses/${courseId}/modules`);
+  revalidatePath(`/courses/${courseId}`);
+}
+
+type AdminLessonFormPayload = Omit<LessonInsert, "id" | "created_at" | "updated_at">;
+
+function adminLessonPayload(courseId: string, formData: FormData): AdminLessonFormPayload {
+  const title = textValue(formData, "title");
+  const sortOrder = numberValue(formData, "sort_order", 0);
+  const minutes = numberValue(formData, "estimated_minutes", 10);
+  const content = textValue(formData, "content_text");
+
+  return {
+    course_id: courseId,
+    module_id: nullableIdValue(formData, "module_id"),
+    title,
+    slug: slugify(textValue(formData, "slug") || title),
+    description: optionalTextValue(formData, "description"),
+    body: content,
+    content_text: content,
+    video_url: optionalTextValue(formData, "video_url"),
+    pdf_url: optionalTextValue(formData, "pdf_url"),
+    image_url: optionalTextValue(formData, "image_url"),
+    duration_minutes: minutes,
+    estimated_minutes: minutes,
+    is_preview: checkboxValue(formData, "is_preview"),
+    status: selectValue(formData, "status", contentStatuses, "draft"),
+    position: sortOrder,
+    sort_order: sortOrder
+  };
+}
+
+export async function createAdminLesson(courseId: string, formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const { error } = await supabase.from("lessons").insert(adminLessonPayload(courseId, formData));
+
+  if (error) throw error;
+  revalidatePath(`/admin/courses/${courseId}/lessons`);
+  revalidatePath(`/courses/${courseId}`);
+}
+
+export async function updateAdminLesson(courseId: string, lessonId: string, formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const payload: LessonUpdate = adminLessonPayload(courseId, formData);
+  const { error } = await supabase.from("lessons").update(payload).eq("id", lessonId);
+
+  if (error) throw error;
+  revalidatePath(`/admin/courses/${courseId}/lessons`);
+  revalidatePath(`/courses/${courseId}`);
+  revalidatePath(`/courses/${courseId}/lessons/${lessonId}`);
+}
+
+export async function createAdminMediaAsset(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const payload: MediaAssetInsert = {
+    title: textValue(formData, "title"),
+    type: selectValue(formData, "type", mediaAssetTypes, "image"),
+    url: textValue(formData, "url"),
+    description: optionalTextValue(formData, "description")
+  };
+  const { error } = await supabase.from("media_assets").insert(payload);
+
+  if (error) throw error;
+  revalidatePath("/admin/media");
+}
+
+export async function createAdminQuiz(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const courseId = textValue(formData, "course_id");
+  const payload: QuizInsert = {
+    course_id: courseId,
+    module_id: nullableIdValue(formData, "module_id"),
+    lesson_id: nullableIdValue(formData, "lesson_id"),
+    title: textValue(formData, "title"),
+    description: optionalTextValue(formData, "description"),
+    status: selectValue(formData, "status", contentStatuses, "draft"),
+    passing_score: numberValue(formData, "passing_score", 70)
+  };
+  const { error } = await supabase.from("quizzes").insert(payload);
+
+  if (error) throw error;
+  revalidatePath("/admin/quizzes");
+  revalidatePath(`/admin/courses/${courseId}/edit`);
+  revalidatePath(`/courses/${courseId}/quiz`);
+}
+
+export async function updateAdminUserRole(userId: string, formData: FormData) {
+  const { supabase, user } = await requireAdmin();
+  const role = selectValue(formData, "role", userRoles, "student");
+
+  if (user.id === userId && role !== "admin") {
+    throw new Error("Du kannst deine eigene Adminrolle nicht entfernen.");
+  }
+
+  const { error } = await supabase.from("profiles").update({ role }).eq("id", userId);
+
+  if (error) throw error;
+  revalidatePath("/admin/users");
+}
+
+export async function createAdminEntitlement(formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const userId = textValue(formData, "user_id");
+  const courseId = textValue(formData, "course_id");
+  const status = selectValue(formData, "status", entitlementStatuses, "active");
+  const payload: EntitlementInsert = {
+    user_id: userId,
+    course_id: courseId,
+    source: selectValue(formData, "source", entitlementSources, "manual"),
+    status,
+    starts_at: dateTimeValue(formData, "starts_at", new Date().toISOString()) || new Date().toISOString(),
+    ends_at: dateTimeValue(formData, "ends_at")
+  };
+
+  const { error } = await supabase.from("entitlements").insert(payload);
+  if (error) throw error;
+
+  if (status === "active") {
+    const enrollment: CourseEnrollmentInsert = { user_id: userId, course_id: courseId };
+    await supabase.from("course_enrollments").upsert(enrollment, { onConflict: "user_id,course_id", ignoreDuplicates: true });
+  }
+
+  revalidatePath("/admin/entitlements");
+  revalidatePath("/admin/courses");
+  revalidatePath("/dashboard");
+}
+
+export async function updateAdminEntitlementStatus(entitlementId: string, formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const status = selectValue(formData, "status", entitlementStatuses, "active");
+  const { data, error } = await supabase.from("entitlements").update({ status }).eq("id", entitlementId).select("*").single();
+
+  if (error) throw error;
+
+  if (status === "active" && data) {
+    const enrollment: CourseEnrollmentInsert = { user_id: data.user_id, course_id: data.course_id };
+    await supabase.from("course_enrollments").upsert(enrollment, { onConflict: "user_id,course_id", ignoreDuplicates: true });
+  }
+
+  revalidatePath("/admin/entitlements");
+  revalidatePath("/dashboard");
 }
