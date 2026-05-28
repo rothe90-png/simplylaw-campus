@@ -1,15 +1,29 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { NextResponse, type NextRequest } from "next/server";
+import { createSupabaseRouteClient } from "@/lib/supabase-route";
 
-export async function GET(request: Request) {
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get("code");
-  const next = requestUrl.searchParams.get("next") || "/dashboard";
-
-  if (code) {
-    const supabase = await createSupabaseServerClient();
-    await supabase.auth.exchangeCodeForSession(code);
+function getSafeNextPath(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return "/dashboard";
   }
 
-  return NextResponse.redirect(new URL(next, requestUrl.origin));
+  return value;
+}
+
+export async function GET(request: NextRequest) {
+  const requestUrl = request.nextUrl;
+  const code = requestUrl.searchParams.get("code");
+  const next = getSafeNextPath(requestUrl.searchParams.get("next"));
+  const response = NextResponse.redirect(new URL(next, request.url));
+
+  if (code) {
+    const supabase = createSupabaseRouteClient(request, response);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (error) {
+      const message = encodeURIComponent("Login-Link konnte nicht bestätigt werden.");
+      return NextResponse.redirect(new URL(`/login?error=${message}`, request.url));
+    }
+  }
+
+  return response;
 }

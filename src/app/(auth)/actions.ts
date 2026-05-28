@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { getSiteUrl } from "@/lib/env";
+import { getRequestOrigin } from "@/lib/env";
 
 function encodeMessage(type: "message" | "error", value: string) {
   return `${type}=${encodeURIComponent(value)}`;
@@ -11,7 +11,7 @@ function encodeMessage(type: "message" | "error", value: string) {
 
 async function getOrigin() {
   const headerStore = await headers();
-  return headerStore.get("origin") || getSiteUrl();
+  return getRequestOrigin(headerStore);
 }
 
 export async function signInAction(formData: FormData) {

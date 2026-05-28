@@ -24,6 +24,18 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 Es wird bewusst kein Service-Role-Key in der App verwendet. Admin-Rechte laufen über die Tabelle `profiles` und RLS-Policies.
 
+Für Vercel Production muss `NEXT_PUBLIC_SITE_URL` auf die echte HTTPS-Domain zeigen, z. B.:
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://simplylaw-campus.vercel.app
+```
+
+In Supabase Auth sollten außerdem diese URLs hinterlegt sein:
+
+- Site URL: `https://simplylaw-campus.vercel.app`
+- Redirect URL Production: `https://simplylaw-campus.vercel.app/auth/callback`
+- Redirect URL lokal: `http://localhost:3000/auth/callback`
+
 ## Datenbank einrichten
 
 Führe die SQL-Migrationen in dieser Reihenfolge in Supabase aus:

@@ -46,8 +46,17 @@ export async function middleware(request: NextRequest) {
   }
 
   const {
-    data: { user }
+    data: { user },
+    error: userError
   } = await supabase.auth.getUser();
+  let hasSessionCookie = Boolean(user);
+
+  if (!hasSessionCookie && userError) {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+    hasSessionCookie = Boolean(session);
+  }
 
   const pathname = request.nextUrl.pathname;
   const isProtectedPath = isInternalPath(pathname);
@@ -56,7 +65,7 @@ export async function middleware(request: NextRequest) {
     return redirectWithSessionCookies("/dashboard");
   }
 
-  if (isProtectedPath && !user) {
+  if (isProtectedPath && !hasSessionCookie) {
     return redirectWithSessionCookies("/login");
   }
 
@@ -69,7 +78,7 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    if (!user) {
+    if (!hasSessionCookie) {
       return redirectWithSessionCookies("/login");
     }
   }
