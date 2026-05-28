@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { FaApple } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
+import { MdOutlineMail } from "react-icons/md";
 import { signInAction } from "@/app/(auth)/actions";
 import { cn } from "@/lib/cn";
 
@@ -27,24 +30,30 @@ function ProviderButton({
   children,
   icon,
   onClick,
-  muted
+  variant = "dark"
 }: {
   children: React.ReactNode;
   icon?: React.ReactNode;
   onClick?: () => void;
-  muted?: boolean;
+  variant?: "apple" | "dark";
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "flex min-h-14 w-full items-center justify-center gap-3 rounded-full border px-5 text-base font-bold text-white transition hover:bg-white/[0.08] focus:outline-none focus:ring-4 focus:ring-brand/25",
-        muted ? "border-white/20 text-slate-300" : "border-slate-500/80"
+        "group flex min-h-16 w-full items-center justify-center gap-4 rounded-[1.35rem] px-6 text-lg font-black transition duration-200 ease-out hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-brand/25 active:translate-y-0",
+        variant === "apple"
+          ? "border border-white bg-white text-black shadow-[0_18px_46px_rgba(255,255,255,0.08)] hover:bg-slate-100"
+          : "border border-white/8 bg-white/[0.24] text-white shadow-[0_18px_46px_rgba(0,0,0,0.22)] hover:bg-white/[0.30]"
       )}
     >
-      {icon ? <span className="text-xl">{icon}</span> : null}
-      {children}
+      {icon ? (
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center text-3xl transition duration-200 group-hover:scale-105">
+          {icon}
+        </span>
+      ) : null}
+      <span className="leading-none">{children}</span>
     </button>
   );
 }
@@ -79,13 +88,15 @@ export function LoginFlow({ message, error }: LoginFlowProps) {
             </div>
 
             <div className="space-y-4">
-              <ProviderButton icon={<span aria-hidden="true">A</span>} muted>
+              <ProviderButton icon={<FaApple aria-hidden="true" />} variant="apple">
                 Mit Apple fortfahren
               </ProviderButton>
-              <ProviderButton icon={<span className="text-brand-300" aria-hidden="true">G</span>} muted>
+              <ProviderButton icon={<FcGoogle aria-hidden="true" />} variant="dark">
                 Mit Google fortfahren
               </ProviderButton>
-              <ProviderButton onClick={() => setMode("email")}>Mit E-Mail fortfahren</ProviderButton>
+              <ProviderButton icon={<MdOutlineMail aria-hidden="true" />} onClick={() => setMode("email")} variant="dark">
+                Mit E-Mail fortfahren
+              </ProviderButton>
             </div>
 
             <div className="space-y-3 text-center text-lg text-slate-400">
