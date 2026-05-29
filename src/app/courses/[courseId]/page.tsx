@@ -8,7 +8,7 @@ import { ProgressBar } from "@/components/progress-bar";
 import { SectionTitle } from "@/components/section-title";
 import { findCatalogCourse, type CourseCatalogEntry, type CourseCatalogModule, type CourseCatalogTone } from "@/lib/course-catalog";
 import { requireOnboardedUser } from "@/lib/auth";
-import { getCourseDetail, type CourseDetail } from "@/lib/queries";
+import { getCourseDetail, isCourseSoftDeleted, type CourseDetail } from "@/lib/queries";
 
 type PageProps = {
   params: Promise<{ courseId: string }>;
@@ -168,7 +168,9 @@ export default async function CourseDetailPage({ params }: PageProps) {
   const { courseId } = await params;
   const context = await requireOnboardedUser();
   const { profile, user } = context;
-  const course = await getCourseDetail(courseId);
+  const [course, isDeleted] = await Promise.all([getCourseDetail(courseId), isCourseSoftDeleted(courseId)]);
+  if (isDeleted) notFound();
+
   const catalog = findCatalogCourse(course?.slug) ?? findCatalogCourse(courseId);
 
   if (!course && !catalog) notFound();

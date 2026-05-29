@@ -213,11 +213,19 @@ export async function updateCourse(courseId: string, formData: FormData) {
 }
 
 export async function deleteCourse(courseId: string) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
-  await supabase.from("courses").delete().eq("id", courseId);
+  await supabase
+    .from("courses")
+    .update({
+      deleted_at: new Date().toISOString(),
+      deleted_by: user.id
+    })
+    .eq("id", courseId);
 
   revalidatePath("/admin");
+  revalidatePath("/admin/courses");
+  revalidatePath("/admin/courses/trash");
   revalidatePath("/courses");
 }
 
@@ -372,6 +380,15 @@ const entitlementStatuses = ["active", "expired", "revoked"] as const satisfies 
 const userRoles = ["student", "admin"] as const satisfies readonly UserRole[];
 
 type AdminCourseFormPayload = Omit<CourseInsert, "id" | "created_at" | "updated_at">;
+type AdminCourseCreateState = {
+  status: "idle" | "error";
+  message: string;
+  constraint?: string;
+};
+type AdminCourseTrashState = {
+  status: "idle" | "error";
+  message: string;
+};
 
 function adminCoursePayload(formData: FormData): AdminCourseFormPayload {
   const title = textValue(formData, "title");
@@ -394,17 +411,203 @@ function adminCoursePayload(formData: FormData): AdminCourseFormPayload {
   };
 }
 
-export async function createAdminCourse(formData: FormData) {
+function postgresConstraint(error: unknown) {
+  if (!error || typeof error !== "object") return null;
+  const values = ["message", "details", "hint"]
+    .map((key) => {
+      const value = (error as Record<string, unknown>)[key];
+      return typeof value === "string" ? value : "";
+    })
+    .join(" ");
+  return values.match(/constraint "([^"]+)"/)?.[1] || null;
+}
+
+function postgresCode(error: unknown) {
+  if (!error || typeof error !== "object") return null;
+  const code = (error as Record<string, unknown>).code;
+  return typeof code === "string" ? code : null;
+}
+
+export async function createAdminCourseWithState(
+  _prevState: AdminCourseCreateState,
+  formData: FormData
+): Promise<AdminCourseCreateState> {
   const { supabase } = await requireAdmin();
   const payload = adminCoursePayload(formData);
-  const { data, error } = await supabase.from("courses").insert(payload).select("id").single();
+  const { error } = await supabase.from("courses").insert(payload);
 
-  if (error) throw error;
+  if (error) {
+    const constraint = postgresConstraint(error) || "courses_slug_key";
+
+    if (postgresCode(error) === "23505") {
+      if (process.env.NODE_ENV === "development") {
+        console.info("[admin courses] duplicate course insert blocked", { constraint });
+      }
+
+      return {
+        status: "error",
+        message: "Dieser Kurs existiert bereits oder der Slug ist vergeben.",
+        constraint
+      };
+    }
+
+    if (process.env.NODE_ENV === "development") {
+      console.info("[admin courses] course insert failed", {
+        code: postgresCode(error),
+        constraint
+      });
+    }
+
+    return {
+      status: "error",
+      message: "Der Kurs konnte nicht gespeichert werden. Bitte prüfe die Angaben.",
+      constraint
+    };
+  }
 
   revalidatePath("/admin");
   revalidatePath("/admin/courses");
   revalidatePath("/courses");
-  redirect(`/admin/courses/${data.id}/edit`);
+  redirect("/admin/courses");
+}
+
+function adminCourseActionError(message = "Die Aktion konnte nicht ausgeführt werden. Bitte versuche es erneut."): AdminCourseTrashState {
+  return {
+    status: "error",
+    message
+  };
+}
+
+export async function softDeleteAdminCourseWithState(
+  _prevState: AdminCourseTrashState,
+  formData: FormData
+): Promise<AdminCourseTrashState> {
+  const { supabase, user } = await requireAdmin();
+  const courseId = textValue(formData, "course_id");
+
+  if (!courseId) return adminCourseActionError();
+
+  const { error } = await supabase
+    .from("courses")
+    .update({
+      deleted_at: new Date().toISOString(),
+      deleted_by: user.id
+    })
+    .eq("id", courseId)
+    .is("deleted_at", null);
+
+  if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.info("[admin courses] soft delete failed", { code: postgresCode(error) });
+    }
+
+    return adminCourseActionError("Der Kurs konnte nicht in den Papierkorb verschoben werden.");
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/courses");
+  revalidatePath("/admin/courses/trash");
+  revalidatePath("/dashboard");
+  revalidatePath("/courses");
+  redirect("/admin/courses");
+}
+
+export async function restoreAdminCourseWithState(
+  _prevState: AdminCourseTrashState,
+  formData: FormData
+): Promise<AdminCourseTrashState> {
+  const { supabase } = await requireAdmin();
+  const courseId = textValue(formData, "course_id");
+
+  if (!courseId) return adminCourseActionError();
+
+  const { error } = await supabase
+    .from("courses")
+    .update({
+      deleted_at: null,
+      deleted_by: null
+    })
+    .eq("id", courseId);
+
+  if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.info("[admin courses] restore failed", { code: postgresCode(error) });
+    }
+
+    return adminCourseActionError("Der Kurs konnte nicht wiederhergestellt werden.");
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/courses");
+  revalidatePath("/admin/courses/trash");
+  revalidatePath("/dashboard");
+  revalidatePath("/courses");
+  redirect("/admin/courses/trash");
+}
+
+async function courseHasLinkedContent(
+  supabase: Awaited<ReturnType<typeof requireAdmin>>["supabase"],
+  courseId: string
+) {
+  const checks = await Promise.all([
+    supabase.from("modules").select("id", { count: "exact", head: true }).eq("course_id", courseId),
+    supabase.from("lessons").select("id", { count: "exact", head: true }).eq("course_id", courseId),
+    supabase.from("quizzes").select("id", { count: "exact", head: true }).eq("course_id", courseId),
+    supabase.from("course_enrollments").select("id", { count: "exact", head: true }).eq("course_id", courseId),
+    supabase.from("entitlements").select("id", { count: "exact", head: true }).eq("course_id", courseId)
+  ]);
+
+  const failedCheck = checks.find((check) => check.error);
+  if (failedCheck?.error) throw failedCheck.error;
+
+  return checks.some((check) => (check.count || 0) > 0);
+}
+
+export async function permanentlyDeleteAdminCourseWithState(
+  _prevState: AdminCourseTrashState,
+  formData: FormData
+): Promise<AdminCourseTrashState> {
+  const { supabase } = await requireAdmin();
+  const courseId = textValue(formData, "course_id");
+
+  if (!courseId) return adminCourseActionError();
+
+  try {
+    if (await courseHasLinkedContent(supabase, courseId)) {
+      return adminCourseActionError(
+        "Dieser Kurs hat noch verknüpfte Inhalte. Bitte zuerst Module/Lektionen entfernen oder Archivierung nutzen."
+      );
+    }
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.info("[admin courses] linked content check failed", { code: postgresCode(error) });
+    }
+
+    return adminCourseActionError();
+  }
+
+  const { error } = await supabase.from("courses").delete().eq("id", courseId).not("deleted_at", "is", null);
+
+  if (error) {
+    if (postgresCode(error) === "23503") {
+      return adminCourseActionError(
+        "Dieser Kurs hat noch verknüpfte Inhalte. Bitte zuerst Module/Lektionen entfernen oder Archivierung nutzen."
+      );
+    }
+
+    if (process.env.NODE_ENV === "development") {
+      console.info("[admin courses] permanent delete failed", { code: postgresCode(error) });
+    }
+
+    return adminCourseActionError("Der Kurs konnte nicht endgültig gelöscht werden.");
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/courses");
+  revalidatePath("/admin/courses/trash");
+  revalidatePath("/dashboard");
+  revalidatePath("/courses");
+  redirect("/admin/courses/trash");
 }
 
 export async function updateAdminCourse(courseId: string, formData: FormData) {

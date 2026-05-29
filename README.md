@@ -45,6 +45,7 @@ Führe die SQL-Migrationen in dieser Reihenfolge in Supabase aus:
 3. `supabase/migrations/003_add_profile_onboarding.sql`
 4. `supabase/migrations/004_repair_profile_onboarding_persistence.sql`
 5. `supabase/migrations/005_admin_cms.sql`
+6. `supabase/migrations/006_course_trash_soft_delete.sql`
 
 Erstellt werden:
 
@@ -62,6 +63,7 @@ Erstellt werden:
 - `entitlements`
 
 Zusätzlich richten die Migrationen Rollen, RLS-Policies, Trigger, Indizes sowie die Storage-Buckets `lesson-files` und `course-media` ein.
+Migration `006_course_trash_soft_delete.sql` ergänzt den Admin-Papierkorb für Kurse über `deleted_at` und `deleted_by`.
 
 ## Admin-Nutzer festlegen
 

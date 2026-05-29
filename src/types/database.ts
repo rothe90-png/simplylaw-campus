@@ -73,6 +73,8 @@ export type Database = {
           sort_order: number;
           is_published: boolean;
           position: number;
+          deleted_at: string | null;
+          deleted_by: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -90,6 +92,8 @@ export type Database = {
           sort_order?: number;
           is_published?: boolean;
           position?: number;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -106,6 +110,8 @@ export type Database = {
           sort_order?: number;
           is_published?: boolean;
           position?: number;
+          deleted_at?: string | null;
+          deleted_by?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -439,7 +445,14 @@ export type Database = {
       };
     };
     Views: {};
-    Functions: {};
+    Functions: {
+      is_course_deleted: {
+        Args: {
+          course_identifier: string;
+        };
+        Returns: boolean;
+      };
+    };
     Enums: {
       user_role: UserRole;
       lesson_status: LessonStatus;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode, SelectHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
 const fieldClass =
@@ -99,14 +99,20 @@ export function AdminCheckbox({
   );
 }
 
-export function AdminSubmitButton({ children, className }: { children: ReactNode; className?: string }) {
+export function AdminSubmitButton({
+  children,
+  className,
+  type = "submit",
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { children: ReactNode }) {
   return (
     <button
       className={cn(
-        "inline-flex min-h-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#2f86ff,#004c91_45%,#5d3fd3)] px-5 text-sm font-bold text-white shadow-[0_18px_42px_rgba(0,76,145,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(0,76,145,0.38)]",
+        "inline-flex min-h-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#2f86ff,#004c91_45%,#5d3fd3)] px-5 text-sm font-bold text-white shadow-[0_18px_42px_rgba(0,76,145,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(0,76,145,0.38)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-[0_18px_42px_rgba(0,76,145,0.28)]",
         className
       )}
-      type="submit"
+      type={type}
+      {...props}
     >
       {children}
     </button>

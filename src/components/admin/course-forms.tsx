@@ -1,5 +1,4 @@
 import {
-  createAdminCourse,
   createAdminLesson,
   createAdminModule,
   updateAdminCourse,
@@ -21,8 +20,8 @@ const statusOptions = [
   { value: "archived", label: "Archiviert" }
 ] as const;
 
-export function AdminCourseForm({ course }: { course?: Course }) {
-  const action = course ? updateAdminCourse.bind(null, course.id) : createAdminCourse;
+export function AdminCourseForm({ course }: { course: Course }) {
+  const action = updateAdminCourse.bind(null, course.id);
 
   return (
     <form action={action} className="grid gap-4 md:grid-cols-2">
@@ -47,7 +46,7 @@ export function AdminCourseForm({ course }: { course?: Course }) {
       <AdminTextArea label="Kurzbeschreibung" name="short_description" defaultValue={course?.short_description} rows={3} className="md:col-span-2" />
       <AdminTextArea label="Beschreibung" name="description" defaultValue={course?.description} rows={5} required className="md:col-span-2" />
       <div className="md:col-span-2">
-        <AdminSubmitButton>{course ? "Kurs speichern" : "Kurs erstellen"}</AdminSubmitButton>
+        <AdminSubmitButton>Kurs speichern</AdminSubmitButton>
       </div>
     </form>
   );

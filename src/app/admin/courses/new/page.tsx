@@ -1,6 +1,6 @@
-import { AdminCourseForm } from "@/components/admin/course-forms";
 import { AdminSecondaryLink } from "@/components/admin/admin-fields";
 import { AdminKicker, AdminPanel, AdminShell } from "@/components/admin/admin-shell";
+import { AdminCourseCreateForm } from "@/components/admin/course-create-form";
 import { requireAdmin } from "@/lib/auth";
 
 export default async function AdminNewCoursePage() {
@@ -22,7 +22,7 @@ export default async function AdminNewCoursePage() {
         </div>
 
         <AdminPanel>
-          <AdminCourseForm />
+          <AdminCourseCreateForm />
         </AdminPanel>
       </section>
     </AdminShell>

@@ -52,6 +52,8 @@ export type AdminCourseListItem = Course & {
   entitlementsCount: number;
 };
 
+export type AdminDeletedCourseListItem = AdminCourseListItem;
+
 export type AdminCourseContent = {
   course: Course | null;
   modules: CourseModule[];
@@ -99,6 +101,7 @@ export async function getCourseSummaries(options?: { enrolledOnly?: boolean }) {
     .from("courses")
     .select("*")
     .eq("is_published", true)
+    .is("deleted_at", null)
     .order("position", { ascending: true })
     .order("created_at", { ascending: true });
 
@@ -173,6 +176,7 @@ export async function getCourseDetail(courseIdOrSlug: string): Promise<CourseDet
 
   let courseQuery = supabase.from("courses").select("*");
   courseQuery = isUuid(courseIdOrSlug) ? courseQuery.eq("id", courseIdOrSlug) : courseQuery.eq("slug", courseIdOrSlug);
+  courseQuery = courseQuery.is("deleted_at", null);
 
   const { data: course, error: courseError } = await courseQuery.maybeSingle();
 
@@ -241,6 +245,7 @@ export async function getLessonPageData(courseIdOrSlug: string, lessonId: string
 
   let courseQuery = supabase.from("courses").select("*");
   courseQuery = isUuid(courseIdOrSlug) ? courseQuery.eq("id", courseIdOrSlug) : courseQuery.eq("slug", courseIdOrSlug);
+  courseQuery = courseQuery.is("deleted_at", null);
 
   const { data: course, error: courseError } = await courseQuery.maybeSingle();
   if (courseError) throw courseError;
@@ -386,6 +391,7 @@ export async function getAdminCourses(): Promise<AdminCourse[]> {
   const { data: coursesData, error: coursesError } = await supabase
     .from("courses")
     .select("*")
+    .is("deleted_at", null)
     .order("position", { ascending: true })
     .order("created_at", { ascending: true });
   if (coursesError) throw coursesError;
@@ -473,7 +479,7 @@ export async function getAdminCourses(): Promise<AdminCourse[]> {
 export async function getAdminDashboardStats() {
   const supabase = await createSupabaseServerClient();
   const [courses, modules, lessons, media, quizzes, users, entitlements] = await Promise.all([
-    supabase.from("courses").select("id", { count: "exact", head: true }),
+    supabase.from("courses").select("id", { count: "exact", head: true }).is("deleted_at", null),
     supabase.from("modules").select("id", { count: "exact", head: true }),
     supabase.from("lessons").select("id", { count: "exact", head: true }),
     supabase.from("media_assets").select("id", { count: "exact", head: true }),
@@ -493,16 +499,8 @@ export async function getAdminDashboardStats() {
   };
 }
 
-export async function getAdminCourseRows(): Promise<AdminCourseListItem[]> {
+async function buildAdminCourseListItems(courses: Course[]) {
   const supabase = await createSupabaseServerClient();
-  const { data: coursesData, error: coursesError } = await supabase
-    .from("courses")
-    .select("*")
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: false });
-
-  if (coursesError) throw coursesError;
-  const courses = coursesData ?? [];
   if (!courses.length) return [];
 
   const courseIds = courses.map((course) => course.id);
@@ -536,6 +534,39 @@ export async function getAdminCourseRows(): Promise<AdminCourseListItem[]> {
     quizzesCount: quizzesCount.get(course.id) || 0,
     entitlementsCount: entitlementsCount.get(course.id) || 0
   }));
+}
+
+export async function getAdminCourseRows(): Promise<AdminCourseListItem[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data: coursesData, error: coursesError } = await supabase
+    .from("courses")
+    .select("*")
+    .is("deleted_at", null)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (coursesError) throw coursesError;
+  return buildAdminCourseListItems(coursesData ?? []);
+}
+
+export async function getAdminDeletedCourseRows(): Promise<AdminDeletedCourseListItem[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data: coursesData, error: coursesError } = await supabase
+    .from("courses")
+    .select("*")
+    .not("deleted_at", "is", null)
+    .order("deleted_at", { ascending: false });
+
+  if (coursesError) throw coursesError;
+  return buildAdminCourseListItems(coursesData ?? []);
+}
+
+export async function isCourseSoftDeleted(courseIdOrSlug: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("is_course_deleted", { course_identifier: courseIdOrSlug });
+
+  if (error) return false;
+  return Boolean(data);
 }
 
 export async function getAdminCourseContent(courseId: string): Promise<AdminCourseContent> {

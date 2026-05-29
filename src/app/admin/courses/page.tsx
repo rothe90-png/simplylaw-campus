@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminSecondaryLink } from "@/components/admin/admin-fields";
 import { AdminKicker, AdminPanel, AdminShell } from "@/components/admin/admin-shell";
+import { SoftDeleteCourseForm } from "@/components/admin/course-trash-actions";
 import { requireAdmin } from "@/lib/auth";
 import { getAdminCourseRows } from "@/lib/queries";
 
@@ -31,7 +32,10 @@ export default async function AdminCoursesPage() {
               Kurse erstellen, Status und Zugriff pflegen, Module und Lektionen vorbereiten.
             </p>
           </div>
-          <AdminSecondaryLink href="/admin/courses/new">Neuen Kurs erstellen</AdminSecondaryLink>
+          <div className="flex flex-wrap gap-2">
+            <AdminSecondaryLink href="/admin/courses/trash">Papierkorb</AdminSecondaryLink>
+            <AdminSecondaryLink href="/admin/courses/new">Neuen Kurs erstellen</AdminSecondaryLink>
+          </div>
         </div>
 
         <div className="grid gap-4">
@@ -63,6 +67,7 @@ export default async function AdminCoursesPage() {
                   <Link className="rounded-2xl border border-white/10 px-4 py-2 text-sm font-bold text-slate-200 transition hover:bg-white/10" href={`/admin/courses/${course.id}/lessons`} prefetch={false}>
                     Lektionen
                   </Link>
+                  <SoftDeleteCourseForm courseId={course.id} />
                 </div>
               </div>
             </AdminPanel>
